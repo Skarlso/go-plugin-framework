@@ -92,12 +92,20 @@ func (p *Plugin) startIdleChecker(ctx context.Context) {
 }
 
 func (p *Plugin) StartWork() {
-	p.interrupt <- true
+	select {
+	case p.interrupt <- true:
+	default:
+		// Channel is full, skip notification - idle checker will still work correctly
+	}
 	p.workerCounter.Add(1)
 }
 
 func (p *Plugin) StopWork() {
-	p.interrupt <- false
+	select {
+	case p.interrupt <- false:
+	default:
+		// Channel is full, skip notification - idle checker will still work correctly
+	}
 	p.workerCounter.Add(-1)
 }
 

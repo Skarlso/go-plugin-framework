@@ -4,16 +4,19 @@ A flexible, production-ready plugin system for Go applications that supports bot
 
 ## Features
 
-- **Dual Plugin Support**: Internal (compiled-in) and external (separate binaries) plugins
-- **HTTP Communication**: TCP and Unix socket communication protocols
-- **Lifecycle Management**: Automatic idle timeout, graceful shutdown, process monitoring
-- **Type Safety**: JSON schema validation and strongly typed contracts
-- **Security**: Process isolation, lock file management, path sanitization
-- **Extensible**: Generic plugin contracts with custom implementations
+This framework provides dual plugin support, allowing you to use both internal plugins (compiled directly into your
+application) and external plugins (separate binary executables). Communication happens over HTTP using either TCP
+connections or Unix sockets.
+
+The system includes automatic lifecycle management with idle timeouts, graceful shutdown, and process monitoring.
+Type safety is maintained through JSON schema validation and strongly typed contracts. Security features include
+process isolation, lock file management for socket conflicts, and path sanitization.
+
+The framework is extensible through generic plugin contracts that allow custom implementations for different use cases.
 
 ## Quick Start
 
-### 1. Define a Plugin Contract
+First, define a plugin contract that specifies what your plugins can do:
 
 ```go
 package contracts
@@ -27,7 +30,7 @@ type DataProcessor interface {
 }
 ```
 
-### 2. Create an External Plugin
+Next, create an external plugin that implements your contract:
 
 ```go
 package main
@@ -79,7 +82,7 @@ func main() {
 }
 ```
 
-### 3. Host Application
+Finally, create a host application that uses your plugins:
 
 ```go
 package main
@@ -136,33 +139,23 @@ func main() {
                              └─────────┘
 ```
 
-### Key Components
+The framework consists of several key components that work together. The Plugin Manager serves as the central orchestrator for plugin discovery and lifecycle management. The Registry manages both internal and external plugin instances, keeping track of what's available and how to access it.
 
-- **Plugin Manager**: Central orchestrator for plugin discovery and lifecycle
-- **Registry**: Manages both internal and external plugin instances
-- **SDK**: Framework for building external plugins with HTTP servers
-- **Contracts**: Type-safe interfaces defining plugin capabilities
-- **Communication**: HTTP-based protocol over TCP or Unix sockets
+The SDK provides a framework for building external plugins with HTTP servers, while Contracts define type-safe interfaces that specify plugin capabilities. Communication between components uses an HTTP-based protocol that can run over either TCP connections or Unix sockets.
 
 ## Plugin Lifecycle
 
-1. **Discovery**: Manager scans directory for executable files
-2. **Capabilities**: Calls `./plugin capabilities` to get metadata
-3. **Configuration**: Passes config via `--config` JSON flag
-4. **Startup**: Plugin starts HTTP server and outputs connection details
-5. **Registration**: Manager connects and registers plugin endpoints
-6. **Runtime**: Plugin handles requests until idle timeout or shutdown
-7. **Cleanup**: Graceful shutdown removes sockets and processes
+Plugin management follows a predictable lifecycle. During discovery, the manager scans a directory for executable files that could be plugins. It then queries each potential plugin by calling `./plugin capabilities` to get metadata about what the plugin can do.
+
+Once a plugin is identified, the manager passes configuration data via a `--config` JSON flag when starting it up. The plugin responds by starting an HTTP server and outputting connection details so the manager knows how to reach it.
+
+After registration, where the manager connects to the plugin and registers its endpoints, the plugin enters its runtime phase. During this time, it handles requests until either an idle timeout is reached or a shutdown is requested. Finally, during cleanup, the system performs a graceful shutdown that removes socket files and terminates processes properly.
 
 ## Communication Protocol
 
-External plugins communicate via HTTP:
+External plugins communicate with the host application using HTTP. Connections can be made over TCP using a host:port combination, or through Unix sockets for local communication. All communication uses `application/json` as the content type.
 
-- **Connection**: TCP (host:port) or Unix sockets
-- **Content-Type**: `application/json`
-- **Health Check**: `GET /healthz` 
-- **Shutdown**: `POST /shutdown`
-- **Custom Endpoints**: Defined by plugin contract
+The framework provides standard endpoints for health checking (`GET /healthz`) and shutdown (`POST /shutdown`). Beyond these, plugins can define custom endpoints based on their specific contracts and functionality.
 
 Example request/response:
 ```json
@@ -181,15 +174,13 @@ Response:
 
 ## Security Features
 
-- **Process Isolation**: External plugins run in separate processes
-- **Lock Files**: Prevent socket conflicts with PID tracking
-- **Path Sanitization**: Removes potentially malicious characters
-- **Timeout Controls**: Automatic idle shutdown prevents resource leaks
-- **Signal Handling**: Graceful SIGINT/SIGTERM handling
+The framework includes several security measures to protect both the host application and the plugins. External plugins run in separate processes, providing isolation from the main application. Lock files prevent socket conflicts by tracking process IDs, ensuring that only one plugin can use a socket at a time.
+
+Path sanitization removes potentially malicious characters from file paths before use. Timeout controls automatically shut down idle plugins to prevent resource leaks, and the system handles SIGINT and SIGTERM signals gracefully to ensure clean shutdowns.
 
 ## Configuration
 
-### Plugin Configuration
+Plugins can be configured using JSON. Here's an example plugin configuration:
 ```json
 {
   "id": "my-plugin-instance",
@@ -204,7 +195,7 @@ Response:
 }
 ```
 
-### Registration Options
+You can also configure registration options when setting up the plugin manager:
 ```go
 pm.RegisterPlugins(ctx, dir,
     manager.WithIdleTimeout(10*time.Minute),
@@ -217,26 +208,15 @@ pm.RegisterPlugins(ctx, dir,
 
 ## Examples
 
-See the [`examples/`](examples/) directory for:
-
-- **simple-processor**: Basic data processing plugin
-- **host**: Example host application using the plugin system
-- **transformer**: Advanced plugin with multiple operations
+The [`examples/`](examples/) directory contains working examples to help you get started. The simple-processor shows a basic data processing plugin, while the host directory contains an example host application that demonstrates how to use the plugin system. There's also a transformer example that shows more advanced plugin operations.
 
 ## Testing
 
-Run tests with:
-```bash
-go test ./...
-```
+Run the test suite with `go test ./...` to verify everything works correctly.
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
+To contribute to this project, fork the repository and create a feature branch for your changes. Make sure to add tests for any new functionality and verify that all existing tests still pass before submitting a pull request.
 
 ## License
 

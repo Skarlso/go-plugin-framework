@@ -10,7 +10,7 @@ Internal plugins are compiled directly into your host application.
 
 #### Creating an Internal Plugin
 
-1. **Implement the Contract Interface**
+Start by implementing the contract interface for your plugin:
 
 ```go
 package myplugin
@@ -34,7 +34,7 @@ func (m *MyDataProcessor) GetSupportedFormats(ctx context.Context) ([]string, er
 }
 ```
 
-2. **Register with Plugin Manager**
+Then register your plugin with the plugin manager:
 
 ```go
 // In your host application
@@ -59,7 +59,7 @@ my-plugin/
 
 #### Implementation Steps
 
-1. **Define Plugin Logic**
+First, define your plugin's core business logic:
 
 ```go
 package main
@@ -82,7 +82,7 @@ func (sp *SimpleProcessor) GetSupportedFormats(ctx context.Context) ([]string, e
 }
 ```
 
-2. **Create HTTP Handlers**
+Next, create HTTP handlers that expose your plugin's functionality:
 
 ```go
 func (sp *SimpleProcessor) handleProcessData(w http.ResponseWriter, r *http.Request) {
@@ -113,7 +113,7 @@ func (sp *SimpleProcessor) handleProcessData(w http.ResponseWriter, r *http.Requ
 }
 ```
 
-3. **Plugin Main Function**
+Finally, implement the main function that ties everything together:
 
 ```go
 func main() {
@@ -192,11 +192,7 @@ type FilterConfig struct {
 
 ### Contract Best Practices
 
-1. **Always embed PluginBase**: Ensures basic functionality
-2. **Use context.Context**: For cancellation and deadlines
-3. **Return structured errors**: With appropriate error codes
-4. **Version your contracts**: Use semantic versioning
-5. **Document schemas**: Provide JSON schemas for complex types
+Always embed PluginBase to ensure basic functionality is available. Use context.Context in all methods to support cancellation and deadlines. Return structured errors with appropriate error codes rather than generic error messages. Version your contracts using semantic versioning to maintain compatibility. Document complex types with JSON schemas to help plugin developers understand the expected data formats.
 
 ## Configuration
 
@@ -375,9 +371,7 @@ chmod +x my-plugin
 
 ### Plugin Distribution
 
-1. **Binary Distribution**: Distribute compiled binaries
-2. **Container Distribution**: Package in Docker containers
-3. **Package Management**: Use Go modules or custom package managers
+You can distribute plugins as compiled binaries for direct execution, package them in Docker containers for consistent deployment environments, or use Go modules or custom package managers for version management and distribution.
 
 ### Plugin Discovery
 
@@ -421,19 +415,13 @@ func (p *MyPlugin) processWithTimeout(ctx context.Context, data []byte) ([]byte,
 
 ### Secure Communication
 
-- Use Unix sockets for local communication
-- Validate all input data
-- Implement proper error handling
-- Log security-relevant events
+Use Unix sockets for local communication when possible, validate all input data before processing, implement proper error handling to avoid information leaks, and log security-relevant events for monitoring and debugging.
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Plugin Not Found**: Check executable permissions and PATH
-2. **Capabilities Error**: Ensure `capabilities` command returns valid JSON
-3. **Connection Timeout**: Check firewall and network settings
-4. **Memory Leaks**: Use profiling tools to identify issues
+Plugin not found errors usually indicate problems with executable permissions or PATH configuration. Capabilities errors occur when the `capabilities` command doesn't return valid JSON. Connection timeouts may be caused by firewall or network settings. Memory leaks should be investigated using Go's profiling tools to identify problematic code paths.
 
 ### Debugging
 

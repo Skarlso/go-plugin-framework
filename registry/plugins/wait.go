@@ -17,7 +17,11 @@ import (
 // It reads the plugin's stdout to get the connection details and then
 // creates an HTTP client to communicate with the plugin.
 func WaitForPlugin(ctx context.Context, plugin *types.Plugin) (*http.Client, string, error) {
-	scanner := bufio.NewScanner(plugin.Cmd.Stdout)
+	stdoutPipe, err := plugin.Cmd.StdoutPipe()
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to get plugin stdout pipe: %w", err)
+	}
+	scanner := bufio.NewScanner(stdoutPipe)
 
 	// Read the first line which should contain the connection location
 	if !scanner.Scan() {
